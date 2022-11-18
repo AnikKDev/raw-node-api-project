@@ -1,0 +1,21 @@
+{
+  "name": "raw-node-api-project",
+  "version": "1.0.0",
+  "description": "Uptime monitoring app\r ##### 1\r - user will add the link to monitor\r - down/up sms notification\r - authorization/authentication\r ##### 2\r - start the api server\r - create, edit, delete user\r - token based authentication\r - logout \r - set links & up/down\r - edit/delete links & rate limit\r - check up/down time\r ##### 3\r - no frameworks\r - node - core modules\r - fs system (node core module)",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnikKDev/raw-node-api-project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AnikKDev/raw-node-api-project/issues"
+  },
+  "homepage": "https://github.com/AnikKDev/raw-node-api-project#readme"
+}

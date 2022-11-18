@@ -1,5 +1,5 @@
 Uptime monitoring app
-##### 3
+##### 1
 - user will add the link to monitor
 - down/up sms notification
 - authorization/authentication
