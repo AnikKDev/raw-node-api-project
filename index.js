@@ -32,9 +32,9 @@ const app = {};
 ); */
 
 // deleting file
-data.delete("test", "newFile2", (err) => {
+/* data.delete("test", "newFile2", (err) => {
   console.log(err);
-});
+}); */
 
 // configuration
 app.config = {
