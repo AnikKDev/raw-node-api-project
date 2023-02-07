@@ -10,7 +10,7 @@ utilities.parseJson = (jsonString) => {
     output = JSON.parse(jsonString);
   } catch (error) {
     output = {};
-    console.log(error);
+    console.log("error parsing json");
   }
   //   return object properties
   return output;

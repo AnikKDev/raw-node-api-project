@@ -1,7 +1,13 @@
 // dependencies
-const { hashString } = require("../../helpers/utils");
-const { read, create } = require("../../lib/data");
-
+const { hashString, parseJson } = require("../../helpers/utils");
+const { read, create, update } = require("../../lib/data");
+const {
+  checkEmail,
+  checkFirstName,
+  checkLastName,
+  checkPassword,
+  checkPhoneNumber,
+} = require("../../helpers/validators");
 const handler = {};
 // etai hocche choosenhandler er function ta. jetar requested properties ar callback ta amra return kortesi. jeta pore req.end() er oikhane giye shesh kortesi.
 handler.userHandler = (requestedProperties, callback) => {
@@ -79,10 +85,77 @@ handler._users.post = (requestedProperties, callback) => {
 };
 // this will handle getting users
 handler._users.get = (requestedProperties, callback) => {
-  callback(200, { message: "successfully getting the user" });
+  try {
+    // first validate phone
+    if (requestedProperties.queryStringObject.phone.trim().length !== 11) {
+      return callback(400, { message: "invalid phone number" });
+    }
+    read(
+      "users",
+      requestedProperties.queryStringObject.phone.trim(),
+      (err, user) => {
+        // check the erro first --> erorback pattern
+        if (err) {
+          return callback(404, { message: "user does not exist" });
+        }
+        // we have to remove the password. we don't want to show the password
+        // but deleting something in the parameter, is not a good practice.
+        //! delete user.password; --> don't do this. Instead,
+        const userParsedData = { ...parseJson(user) };
+        // we have parsed the json data to an object and after that we have used spread operator to copy the things immutably
+        // now we can remove the password
+        delete userParsedData.password;
+        callback(200, userParsedData);
+      }
+    );
+  } catch (err) {
+    callback(404, { message: "Something went wrong" });
+  }
 };
 // this will handle updating users
-handler._users.put = (requestedProperties, callback) => {};
+handler._users.put = (requestedProperties, callback) => {
+  // check validations
+  const phone = checkPhoneNumber(requestedProperties.body.phone, callback);
+  const firstName = checkFirstName(
+    requestedProperties.body.firstName,
+    callback
+  );
+  const lastName = checkLastName(requestedProperties.body.lastName, callback);
+  const password = checkPassword(
+    hashString(requestedProperties.body.password),
+    callback
+  );
+
+  // check if the phone is here because we are assuming phone is a must and it is the id
+  if (phone) {
+    if (firstName || lastName || password) {
+      read("users", phone, (err, userData) => {
+        // jokhoni file syestem theke data ashbe, we should parse it first before using it...
+        const updatedUser = { ...parseJson(userData) };
+        if (err) {
+          return callback(404, { message: "user does not exist" });
+        }
+        if (firstName) {
+          updatedUser.firstName = firstName;
+        }
+        if (lastName) {
+          updatedUser.lastName = lastName;
+        }
+        if (password) {
+          updatedUser.password = password;
+        }
+
+        // update the user
+        update("users", phone, updatedUser, (err) => {
+          if (err) {
+            return callback(404, { message: "Couldn't update the user data" });
+          }
+          return callback(200, { message: "successfully updated the user" });
+        });
+      });
+    }
+  }
+};
 // this will handle deleting users
 handler._users.delete = (requestedProperties, callback) => {};
 module.exports = handler;
