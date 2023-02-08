@@ -1,6 +1,6 @@
 // dependencies
 const { hashString, parseJson } = require("../../helpers/utils");
-const { read, create, update } = require("../../lib/data");
+const { read, create, update, delete: deleteUser } = require("../../lib/data");
 const {
   checkEmail,
   checkFirstName,
@@ -157,5 +157,25 @@ handler._users.put = (requestedProperties, callback) => {
   }
 };
 // this will handle deleting users
-handler._users.delete = (requestedProperties, callback) => {};
+handler._users.delete = (requestedProperties, callback) => {
+  // check the phone number first and lookup the user
+  const phone = checkPhoneNumber(
+    requestedProperties.queryStringObject.phone,
+    callback
+  );
+  if (phone) {
+    read("users", phone, (err, user) => {
+      if (err) {
+        return callback(404, { message: "user does not exist" });
+      }
+      deleteUser("users", phone, (err) => {
+        if (err) {
+          return callback(404, { message: "user couldn't delete" });
+        }
+        callback(200, { message: "user deleted successfully" });
+      });
+      // callback(200, user);
+    });
+  }
+};
 module.exports = handler;
