@@ -25,5 +25,20 @@ utilities.hashString = (string) => {
     .update(string)
     .digest("hex"));
 };
+// creating a function for generating random string
+utilities.randomString = (strLength) => {
+  let string = "";
+  let possibleString =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i <= strLength; i++) {
+    // ekhane charAt diye amra jeta korte pari, jodi charAt er vetor 7 likhi, tahole se string er 7 nummber item ta amake output hishebe dibe. taai amra random ekta number disi oikhane jeta amader length er range er moddhei hobe.
+    string += possibleString.charAt(
+      Math.floor(Math.random() * possibleString.length)
+    );
+  }
+  console.log(string);
+
+  return string;
+};
 // exporting the object
 module.exports = utilities;
