@@ -33,4 +33,11 @@ validators.checkPassword = (password, callback) => {
     return callback(400, { message: "Please enter password" });
   return password;
 };
+
+// validate token
+validators.checkToken = (token, callback) => {
+  if (!token || token.trim().length <= 0)
+    return callback(400, { message: "Please enter token" });
+  return token;
+};
 module.exports = validators;

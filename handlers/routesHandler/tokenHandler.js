@@ -7,6 +7,7 @@ const {
   checkLastName,
   checkPassword,
   checkPhoneNumber,
+  checkToken,
 } = require("../../helpers/validators");
 const handler = {};
 // etai hocche choosenhandler er function ta. jetar requested properties ar callback ta amra return kortesi. jeta pore req.end() er oikhane giye shesh kortesi.
@@ -55,8 +56,21 @@ handler._token.post = (requestedProperties, callback) => {
     }
   });
 };
-// this will handle getting users
-handler._token.get = (requestedProperties, callback) => {};
+// this will handle getting token
+handler._token.get = (requestedProperties, callback) => {
+  const token = checkToken(
+    requestedProperties.queryStringObject.token,
+    callback
+  );
+
+  read("tokens", token, (err, tokenData) => {
+    if (err) {
+      return callback(500, { message: "something wrong getting token data" });
+    }
+    const parsedToken = { ...parseJson(tokenData) };
+    return callback(200, { token: parsedToken });
+  });
+};
 // this will handle updating users
 handler._token.put = (requestedProperties, callback) => {};
 // this will handle deleting users
