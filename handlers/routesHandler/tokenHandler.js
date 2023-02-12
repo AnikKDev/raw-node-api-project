@@ -8,6 +8,7 @@ const {
   checkPassword,
   checkPhoneNumber,
   checkToken,
+  checkExtendedToken,
 } = require("../../helpers/validators");
 const handler = {};
 // etai hocche choosenhandler er function ta. jetar requested properties ar callback ta amra return kortesi. jeta pore req.end() er oikhane giye shesh kortesi.
@@ -72,7 +73,41 @@ handler._token.get = (requestedProperties, callback) => {
   });
 };
 // this will handle updating users
-handler._token.put = (requestedProperties, callback) => {};
+handler._token.put = (requestedProperties, callback) => {
+  // here basically we will extend the token expiration
+  const token = checkToken(
+    requestedProperties.queryStringObject.token,
+    callback
+  );
+  const isExtendedToken = checkExtendedToken(
+    requestedProperties.body.extend,
+    callback
+  );
+  if (!token || !isExtendedToken) {
+    return callback(400, { message: "invalid token or expiration value" });
+  }
+  // read the token before updating it
+  read("tokens", token, (err, tokenData) => {
+    if (err) {
+      return callback(500, { message: "something wrong getting token data" });
+    }
+    const parsedToken = {
+      ...parseJson(tokenData),
+    };
+    if (parsedToken.expires < Date.now()) {
+      return callback(400, { message: "token already expired" });
+    }
+    parsedToken.expires = Date.now() + 60 * 60 * 1000;
+
+    // update the token
+    update("tokens", token, parsedToken, (err) => {
+      if (err) {
+        return callback(500, { message: "something wrong updating token" });
+      }
+      return callback(200, { token: parsedToken });
+    });
+  });
+};
 // this will handle deleting users
 handler._token.delete = (requestedProperties, callback) => {};
 module.exports = handler;

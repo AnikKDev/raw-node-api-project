@@ -56,7 +56,7 @@ handler.handleReqRes = (req, res) => {
 
       // return the final response
       res.setHeader("Content-type", "application/json");
-      res.writeHead(statusCode);
+      res.statusCode = statusCode;
       res.end(payloadString);
     });
     // response handle

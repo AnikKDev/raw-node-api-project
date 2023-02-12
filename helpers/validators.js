@@ -40,4 +40,11 @@ validators.checkToken = (token, callback) => {
     return callback(400, { message: "Please enter token" });
   return token;
 };
+
+// extend token
+validators.checkExtendedToken = (token, callback) => {
+  if (!token || typeof token !== "boolean")
+    return callback(400, { message: "Please enter valid token" });
+  return token;
+};
 module.exports = validators;
