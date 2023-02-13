@@ -1,6 +1,6 @@
 // dependencies
 const { hashString, parseJson, randomString } = require("../../helpers/utils");
-const { read, create, update, delete: deleteUser } = require("../../lib/data");
+const { read, create, update, delete: deleteToken } = require("../../lib/data");
 const {
   checkEmail,
   checkFirstName,
@@ -109,5 +109,22 @@ handler._token.put = (requestedProperties, callback) => {
   });
 };
 // this will handle deleting users
-handler._token.delete = (requestedProperties, callback) => {};
+handler._token.delete = (requestedProperties, callback) => {
+  const token = checkToken(requestedProperties.queryStringObject.token, callback);
+  if(token){
+    read('tokens',token,(err, tokenData)=>{
+      if(err){
+        return callback(400,{message: "error reading token data"})
+      }
+      deleteToken('tokens', token,(err)=>{
+        if(err){
+          return callback(400,{message:"error deleting token data"})
+        }
+        callback(200,{message:"successfully removed token data from tokens folder"})
+      })
+    })
+  }else{
+    return callback(400,{message:"couldn't get token"})
+  }
+};
 module.exports = handler;
