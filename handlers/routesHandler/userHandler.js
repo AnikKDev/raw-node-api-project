@@ -8,6 +8,8 @@ const {
   checkPassword,
   checkPhoneNumber,
 } = require("../../helpers/validators");
+const { _token } = require("./tokenHandler");
+const validators = require("../../helpers/validators");
 const handler = {};
 // etai hocche choosenhandler er function ta. jetar requested properties ar callback ta amra return kortesi. jeta pore req.end() er oikhane giye shesh kortesi.
 handler.userHandler = (requestedProperties, callback) => {
@@ -86,28 +88,47 @@ handler._users.post = (requestedProperties, callback) => {
 // this will handle getting users
 handler._users.get = (requestedProperties, callback) => {
   try {
+    // authentication
     // first validate phone
     if (requestedProperties.queryStringObject.phone.trim().length !== 11) {
       return callback(400, { message: "invalid phone number" });
     }
-    read(
-      "users",
-      requestedProperties.queryStringObject.phone.trim(),
-      (err, user) => {
-        // check the erro first --> erorback pattern
-        if (err) {
-          return callback(404, { message: "user does not exist" });
-        }
-        // we have to remove the password. we don't want to show the password
-        // but deleting something in the parameter, is not a good practice.
-        //! delete user.password; --> don't do this. Instead,
-        const userParsedData = { ...parseJson(user) };
-        // we have parsed the json data to an object and after that we have used spread operator to copy the things immutably
-        // now we can remove the password
-        delete userParsedData.password;
-        callback(200, userParsedData);
-      }
+    const phone = validators.checkPhoneNumber(
+      requestedProperties.queryStringObject.phone,
+      callback
     );
+    const token =
+      typeof requestedProperties.headersObject.token === "string"
+        ? requestedProperties.headersObject.token
+        : false;
+    if (!token) {
+      return callback(400, { message: "Token invalid" });
+    }
+    console.log(token);
+    // varification of token
+    _token.verifyToken(token, phone, (tokenId) => {
+      if (!tokenId) {
+        return callback(400, { message: "token false" });
+      }
+      read(
+        "users",
+        requestedProperties.queryStringObject.phone.trim(),
+        (err, user) => {
+          // check the erro first --> erorback pattern
+          if (err) {
+            return callback(404, { message: "user does not exist" });
+          }
+          // we have to remove the password. we don't want to show the password
+          // but deleting something in the parameter, is not a good practice.
+          //! delete user.password; --> don't do this. Instead,
+          const userParsedData = { ...parseJson(user) };
+          // we have parsed the json data to an object and after that we have used spread operator to copy the things immutably
+          // now we can remove the password
+          delete userParsedData.password;
+          callback(200, userParsedData);
+        }
+      );
+    });
   } catch (err) {
     callback(404, { message: "Something went wrong" });
   }

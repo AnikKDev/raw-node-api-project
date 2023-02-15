@@ -110,21 +110,44 @@ handler._token.put = (requestedProperties, callback) => {
 };
 // this will handle deleting users
 handler._token.delete = (requestedProperties, callback) => {
-  const token = checkToken(requestedProperties.queryStringObject.token, callback);
-  if(token){
-    read('tokens',token,(err, tokenData)=>{
-      if(err){
-        return callback(400,{message: "error reading token data"})
+  const token = checkToken(
+    requestedProperties.queryStringObject.token,
+    callback
+  );
+  if (token) {
+    read("tokens", token, (err, tokenData) => {
+      if (err) {
+        return callback(400, { message: "error reading token data" });
       }
-      deleteToken('tokens', token,(err)=>{
-        if(err){
-          return callback(400,{message:"error deleting token data"})
+      deleteToken("tokens", token, (err) => {
+        if (err) {
+          return callback(400, { message: "error deleting token data" });
         }
-        callback(200,{message:"successfully removed token data from tokens folder"})
-      })
-    })
-  }else{
-    return callback(400,{message:"couldn't get token"})
+        callback(200, {
+          message: "successfully removed token data from tokens folder",
+        });
+      });
+    });
+  } else {
+    return callback(400, { message: "couldn't get token" });
   }
 };
+
+// create a function that will verify the token
+handler._token.verifyToken = (token, phone, callback) => {
+  read("tokens", token, (err, tokenData) => {
+    if (err) {
+      return callback(false);
+    }
+
+    if (
+      parseJson(tokenData).phone !== phone &&
+      parseJson(tokenData).expires < Date.now()
+    ) {
+      return callback(false);
+    }
+    return callback(true);
+  });
+};
+
 module.exports = handler;
