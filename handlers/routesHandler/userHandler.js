@@ -104,7 +104,6 @@ handler._users.get = (requestedProperties, callback) => {
     if (!token) {
       return callback(400, { message: "Token invalid" });
     }
-    console.log(token);
     // varification of token
     _token.verifyToken(token, phone, (tokenId) => {
       if (!tokenId) {
@@ -146,36 +145,50 @@ handler._users.put = (requestedProperties, callback) => {
     hashString(requestedProperties.body.password),
     callback
   );
-
-  // check if the phone is here because we are assuming phone is a must and it is the id
-  if (phone) {
-    if (firstName || lastName || password) {
-      read("users", phone, (err, userData) => {
-        // jokhoni file syestem theke data ashbe, we should parse it first before using it...
-        const updatedUser = { ...parseJson(userData) };
-        if (err) {
-          return callback(404, { message: "user does not exist" });
-        }
-        if (firstName) {
-          updatedUser.firstName = firstName;
-        }
-        if (lastName) {
-          updatedUser.lastName = lastName;
-        }
-        if (password) {
-          updatedUser.password = password;
-        }
-
-        // update the user
-        update("users", phone, updatedUser, (err) => {
-          if (err) {
-            return callback(404, { message: "Couldn't update the user data" });
-          }
-          return callback(200, { message: "successfully updated the user" });
-        });
-      });
-    }
+  const token =
+    typeof requestedProperties.headersObject.token === "string"
+      ? requestedProperties.headersObject.token
+      : false;
+  if (!token) {
+    return callback(400, { message: "Token invalid" });
   }
+
+  _token.verifyToken(token, phone, (tokenId) => {
+    if (!tokenId) {
+      return callback(400, { message: "token false" });
+    }
+    // check if the phone is here because we are assuming phone is a must and it is the id
+    if (phone) {
+      if (firstName || lastName || password) {
+        read("users", phone, (err, userData) => {
+          // jokhoni file syestem theke data ashbe, we should parse it first before using it...
+          const updatedUser = { ...parseJson(userData) };
+          if (err) {
+            return callback(404, { message: "user does not exist" });
+          }
+          if (firstName) {
+            updatedUser.firstName = firstName;
+          }
+          if (lastName) {
+            updatedUser.lastName = lastName;
+          }
+          if (password) {
+            updatedUser.password = password;
+          }
+
+          // update the user
+          update("users", phone, updatedUser, (err) => {
+            if (err) {
+              return callback(404, {
+                message: "Couldn't update the user data",
+              });
+            }
+            return callback(200, { message: "successfully updated the user" });
+          });
+        });
+      }
+    }
+  });
 };
 // this will handle deleting users
 handler._users.delete = (requestedProperties, callback) => {
