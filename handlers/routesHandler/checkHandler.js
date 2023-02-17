@@ -1,5 +1,5 @@
 // dependencies
-const { hashString, parseJson } = require("../../helpers/utils");
+const { hashString, parseJson, randomString } = require("../../helpers/utils");
 const { read, create, update, delete: deleteUser } = require("../../lib/data");
 const {
   checkEmail,
@@ -11,8 +11,9 @@ const {
   checkMethod,
   checkProtocol,
   urlValidator,
+  checkToken,
 } = require("../../helpers/validators");
-const { _token } = require("./tokenHandler");
+const { _token, tokenHandler } = require("./tokenHandler");
 const validators = require("../../helpers/validators");
 const handler = {};
 // etai hocche choosenhandler er function ta. jetar requested properties ar callback ta amra return kortesi. jeta pore req.end() er oikhane giye shesh kortesi.
@@ -52,9 +53,54 @@ handler._check.post = (requestedProperties, callback) => {
     console.log(url, method, statusCode, timeoutSeconds, protocol);
     console.log(200, { message: "validation is failure" });
   } else {
-    console.log(url, method, statusCode, timeoutSeconds, protocol);
-
-    console.log(200, { message: "validation is success" });
+    const token = checkToken(requestedProperties.headersObject.token, callback);
+    // lookup the user phone by reading the token
+    read("tokens", token, (err, tokenData) => {
+      if (err) return callback(403, { message: "error getting token data" });
+      const phone = parseJson(tokenData).phone;
+      // now get user data by using this phone from users directory
+      read("users", phone, (err, userData) => {
+        if (err) return callback(403, { message: "error reading user data" });
+        _token.verifyToken(token, phone, (isTokenValid) => {
+          if (!isTokenValid)
+            return callback(404, { message: "token is invalid" });
+          const userObject = parseJson(userData);
+          const userChecks =
+            typeof userObject.checks === "object" &&
+            userObject.checks instanceof Array
+              ? userObject.checks
+              : [];
+          if (userChecks.length > 5)
+            return callback(404, { message: "user already reached max check" });
+          let checkId = randomString(20);
+          let checkObject = {
+            id: checkId,
+            phone,
+            protocol,
+            url,
+            method,
+            statusCode,
+            timeoutSeconds,
+          };
+          // save the object
+          create("checks", checkId, checkObject, (err) => {
+            // if (err) return callback(500, { message: "error creating check" });
+            // if not error, add checkid to user object first
+            userObject.checks = userChecks;
+            userObject.checks.push(checkId);
+            // update the user data with checks in it
+            update("users", phone, userObject, (err) => {
+              if (err)
+                return callback(400, {
+                  message: "error updating user data with checks in it",
+                });
+              // return the data with new checks
+              callback(200, checkObject);
+            });
+          });
+        });
+      });
+    });
   }
 };
 // this will handle getting users
